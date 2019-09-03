@@ -52,4 +52,10 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 RUN pip install git+git://github.com/openai/baselines.git@8e56dd#egg=baselines
 
+# Additional stuff for udacity project:
+RUN pip install unityagents
+# This is reacher 1-agent headless variant
+RUN wget https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux_NoVis.zip -P /shaang/DeepRL
+RUN unzip /shaang/DeepRL/Reacher_Linux_NoVis.zip -d /shaang/DeepRL
+
 WORKDIR /shaang/DeepRL
