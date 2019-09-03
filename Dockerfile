@@ -58,4 +58,8 @@ RUN pip install unityagents
 RUN wget https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux_NoVis.zip -P /shaang/DeepRL
 RUN unzip /shaang/DeepRL/Reacher_Linux_NoVis.zip -d /shaang/DeepRL
 
+# Force-install newer protobuf version, even if unityagents wants protobuf==3.4.0
+# Needed for gym code to run, and looks like it's working with unity as well
+RUN pip install "protobuf==3.9.1"
+
 WORKDIR /shaang/DeepRL

@@ -499,11 +499,17 @@ if __name__ == '__main__':
     # option_critic_feature(game=game)
     # ppo_feature(game=game)
 
-    # game = 'HalfCheetah-v2'
-    game = 'Hopper-v2'
-    game = 'reacher'
+    game = 'HalfCheetah-v2'
+    # game = 'Hopper-v2'
+    # game = 'reacher'
 
-    assert False, "Looks like it's creating the environment multiple times.."
+    # assert False, "Looks like it's creating the environment multiple times.."
+    # todo: one time eval env, second time actual one
+    # BaseAgent.eval_episode is resetting the environment
+    # todo: override eval_episode like so:
+    # - issue 1: does not stop once enviromnet is done, only once it gets "episodic_returns" field back
+    # - issue 2: also reset once evaluation is done
+    # - issue 3: also set train and eval mode on the udacity environment so we are faster/slower
 
     # a2c_continuous(game=game)
     ppo_continuous(game=game)
