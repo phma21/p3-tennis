@@ -487,8 +487,8 @@ if __name__ == '__main__':
     mkdir('tf_log')
     set_one_thread()
     random_seed()
-    select_device(-1)
-    # select_device(0)
+    # select_device(-1)
+    select_device(0)
 
     game = 'CartPole-v0'
     # dqn_feature(game=game)
@@ -501,10 +501,14 @@ if __name__ == '__main__':
 
     # game = 'HalfCheetah-v2'
     game = 'Hopper-v2'
+    game = 'reacher'
+
+    assert False, "Looks like it's creating the environment multiple times.."
+
     # a2c_continuous(game=game)
-    # ppo_continuous(game=game)
+    ppo_continuous(game=game)
     # ddpg_continuous(game=game)
-    td3_continuous(game=game)
+    # td3_continuous(game=game)
 
     game = 'BreakoutNoFrameskip-v4'
     # dqn_pixel(game=game)

@@ -32,7 +32,15 @@ def make_env(env_id, seed, rank, episode_life=True):
             _, domain, task = env_id.split('-')
             env = dm_control2gym.make(domain_name=domain, task_name=task)
         else:
-            env = gym.make(env_id)
+            # My code for reacher env:
+            if env_id == 'reacher':
+                # from gym_unity.envs.unity_env import UnityEnv
+                # from p2_continuous_control.unity_env import UnityEnv
+                # env = UnityEnv('p2_continuous_control/Reacher_Linux/Reacher.x86_64')
+                env = ReacherWrapper()
+            else:
+                env = gym.make(env_id)
+
         is_atari = hasattr(gym.envs, 'atari') and isinstance(
             env.unwrapped, gym.envs.atari.atari_env.AtariEnv)
         if is_atari:
@@ -53,6 +61,77 @@ def make_env(env_id, seed, rank, episode_life=True):
         return env
 
     return _thunk
+
+
+class ReacherWrapper(gym.Env):
+
+    metadata = {
+        # 'render.modes': ['human'],
+        'render.modes': [],
+    }
+
+    reward_range = (0., 0.1)
+
+    def __init__(self):
+        from unityagents import UnityEnvironment
+
+        env = UnityEnvironment(file_name='p2_continuous_control/Reacher_Linux/Reacher.x86_64')
+
+        # get the default brain
+        brain_name = env.brain_names[0]
+        brain = env.brains[brain_name]
+
+        # reset the environment
+        env_info = env.reset(train_mode=True)[brain_name]
+
+        # number of agents
+        num_agents = len(env_info.agents)
+        print('Number of agents:', num_agents)
+
+        # size of each action
+        action_size = brain.vector_action_space_size
+        print('Size of each action:', action_size)
+
+        # examine the state space
+        states = env_info.vector_observations
+        state_size = states.shape[1]
+        print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
+        print('The state for the first agent looks like:', states[0])
+
+        self.unity_env = env
+        self.brain_name = brain_name
+
+        # action vector is between -1 and +1
+        action_space = np.array([1] * brain.vector_action_space_size)
+        # 100 is a guess from me ;-)
+        state_space = np.array([100] * brain.vector_observation_space_size)
+
+        # Need to be set
+        self.action_space = Box(-action_space, action_space, dtype=np.float32)
+        self.observation_space = Box(-state_space, state_space, dtype=np.float32)
+
+    def step(self, action):
+        env_info = self.unity_env.step(action)[self.brain_name]
+        state = env_info.vector_observations[0]  # get the current state
+        reward = env_info.rewards[0]  # get the reward
+        done = env_info.local_done[0]  # see if episode has finished
+
+        return state, reward, done, {}
+
+    def reset(self):
+        env_info = self.unity_env.reset(train_mode=self.train_mode)[self.brain_name]
+        return env_info.vector_observations[0]  # Return current state
+
+    def render(self, mode='human'):
+        # no-op
+        raise NotImplementedError()
+
+    def seed(self, seed=None):
+        # no-op
+        return [0]
+
+    def close(self):
+        self.unity_env.close()
 
 
 class OriginalReturnWrapper(gym.Wrapper):
