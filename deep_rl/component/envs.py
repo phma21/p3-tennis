@@ -26,7 +26,8 @@ except ImportError:
 # adapted from https://github.com/ikostrikov/pytorch-a2c-ppo-acktr/blob/master/envs.py
 def make_env(env_id, seed, rank, episode_life=True):
     def _thunk():
-        random_seed(seed)
+        # I think this is not needed
+        # random_seed(seed)
         if env_id.startswith("dm"):
             import dm_control2gym
             _, domain, task = env_id.split('-')
@@ -37,7 +38,7 @@ def make_env(env_id, seed, rank, episode_life=True):
                 # from gym_unity.envs.unity_env import UnityEnv
                 # from p2_continuous_control.unity_env import UnityEnv
                 # env = UnityEnv('p2_continuous_control/Reacher_Linux/Reacher.x86_64')
-                env = ReacherWrapper()
+                env = make_reacher()
             else:
                 env = gym.make(env_id)
 
@@ -63,6 +64,16 @@ def make_env(env_id, seed, rank, episode_life=True):
     return _thunk
 
 
+_reacher_instance = None
+
+
+def make_reacher():
+    global _reacher_instance
+    if not _reacher_instance:
+        _reacher_instance = ReacherWrapper()
+    return _reacher_instance
+
+
 class ReacherWrapper(gym.Env):
 
     metadata = {
@@ -75,28 +86,30 @@ class ReacherWrapper(gym.Env):
     def __init__(self):
         from unityagents import UnityEnvironment
 
-        env = UnityEnvironment(file_name='p2_continuous_control/Reacher_Linux/Reacher.x86_64')
+        env = UnityEnvironment(file_name='Reacher_Linux/Reacher.x86_64')
 
         # get the default brain
         brain_name = env.brain_names[0]
         brain = env.brains[brain_name]
 
+        self.train_mode = True
+
         # reset the environment
-        env_info = env.reset(train_mode=True)[brain_name]
+        env_info = env.reset(train_mode=self.train_mode)[brain_name]
 
         # number of agents
         num_agents = len(env_info.agents)
-        print('Number of agents:', num_agents)
+        #print('Number of agents:', num_agents)
 
         # size of each action
         action_size = brain.vector_action_space_size
-        print('Size of each action:', action_size)
+        #print('Size of each action:', action_size)
 
         # examine the state space
         states = env_info.vector_observations
         state_size = states.shape[1]
-        print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
-        print('The state for the first agent looks like:', states[0])
+        #print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
+        #print('The state for the first agent looks like:', states[0])
 
         self.unity_env = env
         self.brain_name = brain_name

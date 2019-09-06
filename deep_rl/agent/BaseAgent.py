@@ -46,7 +46,14 @@ class BaseAgent:
                 break
         return ret
 
+    def set_train_mode(self, train):
+        # For Unity agents:
+        if hasattr(self.config.eval_env.env.envs[0].env, 'train_mode'):
+            print("Set train to, ", train)
+            self.config.eval_env.train_mode = train
+
     def eval_episodes(self):
+        # self.set_train_mode(False)
         episodic_returns = []
         for ep in range(self.config.eval_episodes):
             total_rewards = self.eval_episode()
@@ -55,6 +62,7 @@ class BaseAgent:
             self.total_steps, np.mean(episodic_returns), np.std(episodic_returns) / np.sqrt(len(episodic_returns))
         ))
         self.logger.add_scalar('episodic_return_test', np.mean(episodic_returns), self.total_steps)
+        # self.set_train_mode(True)
         return {
             'episodic_return_test': np.mean(episodic_returns),
         }

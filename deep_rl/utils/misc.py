@@ -12,6 +12,7 @@ import torch
 import time
 from .torch_utils import *
 from pathlib import Path
+from deep_rl.component.envs import _reacher_instance
 
 
 def run_steps(agent):
@@ -25,7 +26,11 @@ def run_steps(agent):
             agent.logger.info('steps %d, %.2f steps/s' % (agent.total_steps, config.log_interval / (time.time() - t0)))
             t0 = time.time()
         if config.eval_interval and not agent.total_steps % config.eval_interval:
+            if _reacher_instance:
+                _reacher_instance.train_mode = False
+            print("evaluation")
             agent.eval_episodes()
+            print("evaluation done")
         if config.max_steps and agent.total_steps >= config.max_steps:
             agent.close()
             break

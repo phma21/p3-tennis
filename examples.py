@@ -229,29 +229,6 @@ def a2c_pixel(**kwargs):
     run_steps(A2CAgent(config))
 
 
-def a2c_continuous(**kwargs):
-    generate_tag(kwargs)
-    kwargs.setdefault('log_level', 0)
-    config = Config()
-    config.merge(kwargs)
-
-    config.num_workers = 16
-    config.task_fn = lambda: Task(config.game, num_envs=config.num_workers)
-    config.eval_env = Task(config.game)
-    config.optimizer_fn = lambda params: torch.optim.RMSprop(params, lr=0.0007)
-    config.network_fn = lambda: GaussianActorCriticNet(
-        config.state_dim, config.action_dim,
-        actor_body=FCBody(config.state_dim), critic_body=FCBody(config.state_dim))
-    config.discount = 0.99
-    config.use_gae = True
-    config.gae_tau = 1.0
-    config.entropy_weight = 0.01
-    config.rollout_length = 5
-    config.gradient_clip = 5
-    config.max_steps = int(2e7)
-    run_steps(A2CAgent(config))
-
-
 # N-Step DQN
 def n_step_dqn_feature(**kwargs):
     generate_tag(kwargs)
@@ -392,6 +369,32 @@ def ppo_pixel(**kwargs):
     run_steps(PPOAgent(config))
 
 
+def a2c_continuous(**kwargs):
+    generate_tag(kwargs)
+    kwargs.setdefault('log_level', 0)
+    config = Config()
+    config.merge(kwargs)
+
+    config.num_workers = 1
+    config.task_fn = lambda: Task(config.game, num_envs=config.num_workers)
+    config.eval_env = Task(config.game)
+    config.optimizer_fn = lambda params: torch.optim.RMSprop(params, lr=0.0007)
+    config.network_fn = lambda: GaussianActorCriticNet(
+        config.state_dim, config.action_dim,
+        actor_body=FCBody(config.state_dim), critic_body=FCBody(config.state_dim))
+    config.discount = 0.99
+    config.use_gae = True
+    config.gae_tau = 1.0
+    config.entropy_weight = 0.01
+    config.rollout_length = 5
+    config.gradient_clip = 5
+    config.max_steps = int(2e7)
+
+    config.save_interval = 5e4
+
+    run_steps(A2CAgent(config))
+
+
 def ppo_continuous(**kwargs):
     generate_tag(kwargs)
     kwargs.setdefault('log_level', 0)
@@ -402,21 +405,34 @@ def ppo_continuous(**kwargs):
     config.eval_env = config.task_fn()
 
     config.network_fn = lambda: GaussianActorCriticNet(
-        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh),
-        critic_body=FCBody(config.state_dim, gate=torch.tanh))
+        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(64, 64)),
+        critic_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(64, 64)))
     config.optimizer_fn = lambda params: torch.optim.Adam(params, 3e-4, eps=1e-5)
     config.discount = 0.99
     config.use_gae = True
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
-    config.rollout_length = 2048
+    config.rollout_length = 1024  # 2048
     config.optimization_epochs = 10
     config.mini_batch_size = 64
     config.ppo_ratio_clip = 0.2
     config.log_interval = 2048
     config.max_steps = 1e6
     config.state_normalizer = MeanStdNormalizer()
-    run_steps(PPOAgent(config))
+
+    # My stuff
+    config.save_interval = 51200 * 2
+    config.eval_interval = 2048
+    config.eval_episodes = 10
+
+    assert config.eval_interval % config.rollout_length == 0
+    assert config.log_interval % config.rollout_length == 0
+    assert config.save_interval % config.rollout_length == 0
+
+    ppo_agent = PPOAgent(config)
+    load_from_step = 921600
+    # ppo_agent.load('data/%s-%s-%d' % (ppo_agent.__class__.__name__, config.tag, load_from_step))
+    run_steps(ppo_agent)
 
 
 # DDPG
@@ -429,8 +445,8 @@ def ddpg_continuous(**kwargs):
     config.task_fn = lambda: Task(config.game)
     config.eval_env = config.task_fn()
     config.max_steps = int(1e6)
-    config.eval_interval = int(1e4)
-    config.eval_episodes = 20
+    config.eval_interval = int(1e5)
+    config.eval_episodes = 10
 
     config.network_fn = lambda: DeterministicActorCriticNet(
         config.state_dim, config.action_dim,
@@ -446,6 +462,9 @@ def ddpg_continuous(**kwargs):
         size=(config.action_dim,), std=LinearSchedule(0.2))
     config.warm_up = int(1e4)
     config.target_network_mix = 1e-3
+
+    config.save_interval = 5e4
+
     run_steps(DDPGAgent(config))
 
 
@@ -485,10 +504,13 @@ def td3_continuous(**kwargs):
 if __name__ == '__main__':
     mkdir('log')
     mkdir('tf_log')
+    mkdir('data')
     set_one_thread()
-    random_seed()
-    # select_device(-1)
-    select_device(0)
+    seed = np.random.randint(int(1e6))
+    print('Using seed: ', seed)
+    random_seed(seed)
+    select_device(-1)
+    # select_device(0)
 
     game = 'CartPole-v0'
     # dqn_feature(game=game)
@@ -499,17 +521,9 @@ if __name__ == '__main__':
     # option_critic_feature(game=game)
     # ppo_feature(game=game)
 
-    game = 'HalfCheetah-v2'
+    # game = 'HalfCheetah-v2'
     # game = 'Hopper-v2'
-    # game = 'reacher'
-
-    # assert False, "Looks like it's creating the environment multiple times.."
-    # todo: one time eval env, second time actual one
-    # BaseAgent.eval_episode is resetting the environment
-    # todo: override eval_episode like so:
-    # - issue 1: does not stop once enviromnet is done, only once it gets "episodic_returns" field back
-    # - issue 2: also reset once evaluation is done
-    # - issue 3: also set train and eval mode on the udacity environment so we are faster/slower
+    game = 'reacher'
 
     # a2c_continuous(game=game)
     ppo_continuous(game=game)
@@ -524,3 +538,5 @@ if __name__ == '__main__':
     # n_step_dqn_pixel(game=game)
     # option_critic_pixel(game=game)
     # ppo_pixel(game=game)
+
+    print('Used seed: ', seed)

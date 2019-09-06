@@ -4,7 +4,7 @@ import time
 
 # time.sleep(5)
 
-env = UnityEnvironment(file_name='Reacher_Linux/Reacher.x86_64')
+env = UnityEnvironment(file_name='../Reacher_Linux/Reacher.x86_64')
 
 # time.sleep(5)
 
@@ -13,8 +13,6 @@ brain_name = env.brain_names[0]
 brain = env.brains[brain_name]
 
 # time.sleep(5)
-
-
 
 # reset the environment
 env_info = env.reset(train_mode=True)[brain_name]
