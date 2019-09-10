@@ -422,8 +422,8 @@ def ppo_continuous(**kwargs):
 
     # My stuff
     config.save_interval = 51200 * 2
-    config.eval_interval = 2048
-    config.eval_episodes = 10
+    #config.eval_interval = 2048
+    #config.eval_episodes = 10
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
@@ -502,12 +502,13 @@ def td3_continuous(**kwargs):
 
 
 if __name__ == '__main__':
-    mkdir('log')
-    mkdir('tf_log')
-    mkdir('data')
+    output_dir = '/output/philipp-drl'  # For k8s
+    # output_dir = ''  # For local
+    mkdir(os.path.join(output_dir, 'log'))
+    mkdir(os.path.join(output_dir, 'tf_log'))
+    mkdir(os.path.join(output_dir, 'data'))
     set_one_thread()
     seed = np.random.randint(int(1e6))
-    print('Using seed: ', seed)
     random_seed(seed)
     select_device(-1)
     # select_device(0)
@@ -525,10 +526,10 @@ if __name__ == '__main__':
     # game = 'Hopper-v2'
     game = 'reacher'
 
-    # a2c_continuous(game=game)
-    ppo_continuous(game=game)
-    # ddpg_continuous(game=game)
-    # td3_continuous(game=game)
+    # a2c_continuous(game=game, seed=seed, output_dir=output_dir)
+    ppo_continuous(game=game, seed=seed, output_dir=output_dir)
+    # ddpg_continuous(game=game, seed=seed, output_dir=output_dir)
+    # td3_continuous(game=game, seed=seed, output_dir=output_dir)
 
     game = 'BreakoutNoFrameskip-v4'
     # dqn_pixel(game=game)
@@ -538,5 +539,3 @@ if __name__ == '__main__':
     # n_step_dqn_pixel(game=game)
     # option_critic_pixel(game=game)
     # ppo_pixel(game=game)
-
-    print('Used seed: ', seed)

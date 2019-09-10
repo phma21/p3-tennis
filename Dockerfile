@@ -74,8 +74,10 @@ USER root
 COPY ./deep_rl /shaang/DeepRL/deep_rl
 COPY examples.py /shaang/DeepRL/
 RUN chown -R shaang /shaang && chgrp -R shaang /shaang
+# Our cluster runs containers as a different user
+RUN chmod -R a+rwx /shaang/DeepRL/
 
-USER shaang
+USER root
 
 WORKDIR /shaang/DeepRL
 

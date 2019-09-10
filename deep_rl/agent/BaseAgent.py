@@ -15,8 +15,9 @@ from skimage.io import imsave
 class BaseAgent:
     def __init__(self, config):
         self.config = config
-        self.logger = get_logger(tag=config.tag, log_level=config.log_level)
+        self.logger = get_logger(tag=config.tag, log_level=config.log_level, output_dir=config.output_dir)
         self.task_ind = 0
+        self.logger.info('Using seed: %d' % config.seed)
 
     def close(self):
         close_obj(self.task)

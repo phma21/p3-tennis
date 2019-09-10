@@ -3,6 +3,8 @@
 # Permission given to modify the code as long as you keep this        #
 # declaration at the top                                              #
 #######################################################################
+import uuid
+from copy import deepcopy
 
 import numpy as np
 import pickle
@@ -21,7 +23,7 @@ def run_steps(agent):
     t0 = time.time()
     while True:
         if config.save_interval and not agent.total_steps % config.save_interval:
-            agent.save('data/%s-%s-%d' % (agent_name, config.tag, agent.total_steps))
+            agent.save(norm_and_join(config.output_dir, 'data/%s-%s-%d' % (agent_name, config.tag, agent.total_steps)))
         if config.log_interval and not agent.total_steps % config.log_interval:
             agent.logger.info('steps %d, %.2f steps/s' % (agent.total_steps, config.log_interval / (time.time() - t0)))
             t0 = time.time()
@@ -36,6 +38,10 @@ def run_steps(agent):
             break
         agent.step()
         agent.switch_task()
+
+
+def norm_and_join(basepath, subpath):
+    return os.path.normpath(os.path.join(basepath, subpath))
 
 
 def get_time_str():
@@ -68,16 +74,14 @@ def random_sample(indices, batch_size):
 def generate_tag(params):
     if 'tag' in params.keys():
         return
+    params_copy = deepcopy(params)
+    del params_copy['game']
+    del params_copy['output_dir']
+
     game = params['game']
-    params.setdefault('run', 0)
-    run = params['run']
-    del params['game']
-    del params['run']
-    str = ['%s_%s' % (k, v) for k, v in sorted(params.items())]
-    tag = '%s-%s-run-%d' % (game, '-'.join(str), run)
+    string = ['%s_%s' % (k, v) for k, v in sorted(params_copy.items())]
+    tag = '%s--%s-%s' % (game, datetime.datetime.now().strftime("%y%m%d-%H%M%S"), '-'.join(string))
     params['tag'] = tag
-    params['game'] = game
-    params['run'] = run
 
 
 def translate(pattern):

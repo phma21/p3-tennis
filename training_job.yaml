@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: philipp-drl
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: philipp-drl
+    spec:
+      containers:
+      - name: philipp-drl
+        image: docker-registry.default.svc:5000/appsdev/philipp-drl
+        # command: ["python3",  "examples.py"]
+        command: ["sleep", "9999"]
+        volumeMounts:
+          - mountPath: "/output"
+            name: "liskov"
+      restartPolicy: Never # Not working in openshift
+      volumes:
+        -
+          name: "liskov"
+          persistentVolumeClaim:
+            claimName: "pvc-liskov-dpl"
