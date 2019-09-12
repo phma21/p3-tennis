@@ -10,6 +10,7 @@ import torch
 
 class Config:
     DEVICE = torch.device('cpu')
+    VOLATILE_MEMBERS = ("parser", '__eval_env')
 
     def __init__(self):
         self.parser = argparse.ArgumentParser()
@@ -59,6 +60,9 @@ class Config:
         self.async_actor = True
         self.tasks = False
 
+        for member, value in {m: v for m, v in self.__dict__.items() if m not in self.VOLATILE_MEMBERS}.items():
+            self.add_argument('--' + member, default=value, required=False)
+
     @property
     def eval_env(self):
         return self.__eval_env
@@ -79,3 +83,9 @@ class Config:
             config_dict = args.__dict__
         for key in config_dict.keys():
             setattr(self, key, config_dict[key])
+
+    def __str__(self):
+        ret = ''
+        for member, value in {m: v for m, v in self.__dict__.items() if m not in self.VOLATILE_MEMBERS}.items():
+            ret += str(member) + ' = ' + str(value) + '\n'
+        return ret
