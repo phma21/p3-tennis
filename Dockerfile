@@ -33,9 +33,9 @@ RUN rm -rf /var/lib/apt/lists/*
 # This is absolutely optional and not recommended. You can remove them safely.
 # But be sure to make corresponding changes to all the scripts.
 
-WORKDIR /shaang
-RUN chmod -R 777 /shaang && chmod -R 777 /usr/local && useradd -d /shaang -u 13071 shaang
-USER shaang
+#WORKDIR /shaang
+#RUN chmod -R 777 /shaang && chmod -R 777 /usr/local && useradd -d /shaang -u 13071 shaang
+#USER shaang
 
 RUN mkdir -p /shaang/.mujoco \
     && wget https://www.roboti.us/download/mjpro150_linux.zip -O mujoco.zip \
@@ -68,16 +68,16 @@ RUN unzip /shaang/DeepRL/Reacher_Linux_NoVis.zip -d /shaang/DeepRL && mv /shaang
 # Needed for gym code to run, and looks like it's working with unity as well
 RUN pip --proxy $http_proxy'' install "protobuf==3.9.1"
 
-USER root
+#USER root
 
 # Copy code
 COPY ./deep_rl /shaang/DeepRL/deep_rl
 COPY examples.py /shaang/DeepRL/
-RUN chown -R shaang /shaang && chgrp -R shaang /shaang
+#RUN chown -R shaang /shaang && chgrp -R shaang /shaang
 # Our cluster runs containers as a different user
-RUN chmod -R a+rwx /shaang/DeepRL/
+#RUN chmod -R a+rwx /shaang/DeepRL/
 
-USER root
+#USER root
 
 WORKDIR /shaang/DeepRL
 

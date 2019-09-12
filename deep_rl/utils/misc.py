@@ -28,11 +28,11 @@ def run_steps(agent):
             agent.logger.info('steps %d, %.2f steps/s' % (agent.total_steps, config.log_interval / (time.time() - t0)))
             t0 = time.time()
         if config.eval_interval and not agent.total_steps % config.eval_interval:
-            if _reacher_instance:
-                _reacher_instance.train_mode = False
-            print("evaluation")
+            if config.game == 'reacher':
+                agent.task.env.envs[0].env.train_mode = False
             agent.eval_episodes()
-            print("evaluation done")
+            if config.game == 'reacher':
+                agent.task.env.envs[0].env.train_mode = True
         if config.max_steps and agent.total_steps >= config.max_steps:
             agent.close()
             break

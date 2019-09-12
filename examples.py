@@ -405,14 +405,14 @@ def ppo_continuous(**kwargs):
     config.eval_env = config.task_fn()
 
     config.network_fn = lambda: GaussianActorCriticNet(
-        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(64, 64)),
-        critic_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(64, 64)))
+        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(128, 128)),
+        critic_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(128, 128)))
     config.optimizer_fn = lambda params: torch.optim.Adam(params, 3e-4, eps=1e-5)
     config.discount = 0.99
     config.use_gae = True
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
-    config.rollout_length = 1024  # 2048
+    config.rollout_length = 2048
     config.optimization_epochs = 10
     config.mini_batch_size = 64
     config.ppo_ratio_clip = 0.2
@@ -422,8 +422,8 @@ def ppo_continuous(**kwargs):
 
     # My stuff
     config.save_interval = 51200 * 2
-    #config.eval_interval = 2048
-    #config.eval_episodes = 10
+    # config.eval_interval = 2048
+    # config.eval_episodes = 1
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
@@ -445,8 +445,8 @@ def ddpg_continuous(**kwargs):
     config.task_fn = lambda: Task(config.game)
     config.eval_env = config.task_fn()
     config.max_steps = int(1e6)
-    config.eval_interval = int(1e5)
-    config.eval_episodes = 10
+    # config.eval_interval = int(1e5)
+    # config.eval_episodes = 1
 
     config.network_fn = lambda: DeterministicActorCriticNet(
         config.state_dim, config.action_dim,
@@ -502,16 +502,16 @@ def td3_continuous(**kwargs):
 
 
 if __name__ == '__main__':
-    output_dir = '/output/philipp-drl'  # For k8s
-    # output_dir = ''  # For local
+    # output_dir = '/output/philipp-drl'  # For k8s
+    output_dir = ''  # For local
     mkdir(os.path.join(output_dir, 'log'))
     mkdir(os.path.join(output_dir, 'tf_log'))
     mkdir(os.path.join(output_dir, 'data'))
     set_one_thread()
     seed = np.random.randint(int(1e6))
     random_seed(seed)
-    select_device(-1)
-    # select_device(0)
+    # select_device(-1)
+    select_device(0)
 
     game = 'CartPole-v0'
     # dqn_feature(game=game)
@@ -527,8 +527,8 @@ if __name__ == '__main__':
     game = 'reacher'
 
     # a2c_continuous(game=game, seed=seed, output_dir=output_dir)
-    ppo_continuous(game=game, seed=seed, output_dir=output_dir)
-    # ddpg_continuous(game=game, seed=seed, output_dir=output_dir)
+    # ppo_continuous(game=game, seed=seed, output_dir=output_dir)
+    ddpg_continuous(game=game, seed=seed, output_dir=output_dir)
     # td3_continuous(game=game, seed=seed, output_dir=output_dir)
 
     game = 'BreakoutNoFrameskip-v4'
