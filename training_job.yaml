@@ -2,24 +2,26 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: philipp-drl
+  annotations:
+    openshift.io/scc: maprkdf-scc
 spec:
-  parallelism: 1
-  completions: 1
+  parallelism: 10
+  completions: 10
   template:
     metadata:
       name: philipp-drl
+      annotations:
+        openshift.io/scc: maprkdf-scc
     spec:
       containers:
       - name: philipp-drl
-        image: docker-registry.default.svc:5000/appsdev/philipp-drl
-        # command: ["python3",  "examples.py"]
-        command: ["sleep", "9999"]
+        image: docker-registry.default.svc:5000/appsdev/philipp-drl:latest
+        command: ["python3",  "examples.py"]
         volumeMounts:
           - mountPath: "/output"
-            name: "liskov"
+            name: liskov
       restartPolicy: Never # Not working in openshift
       volumes:
-        -
-          name: "liskov"
+        - name: liskov
           persistentVolumeClaim:
-            claimName: "pvc-liskov-dpl"
+            claimName: pvc-liskov-dpl

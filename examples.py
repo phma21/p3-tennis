@@ -412,11 +412,12 @@ def ppo_continuous(**kwargs):
     config.use_gae = True
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
-    config.rollout_length = 2048
+    # Each reacher episode is 1000 steps
+    config.rollout_length = 4096  # old: 2048
     config.optimization_epochs = 10
-    config.mini_batch_size = 64
+    config.mini_batch_size = 1024  # old: 64
     config.ppo_ratio_clip = 0.2
-    config.log_interval = 2048
+    config.log_interval = 4096
     config.max_steps = 1e6
     config.state_normalizer = MeanStdNormalizer()
 
@@ -510,8 +511,8 @@ if __name__ == '__main__':
     set_one_thread()
     seed = np.random.randint(int(1e6))
     random_seed(seed)
-    # select_device(-1)
-    select_device(0)
+    select_device(-1)
+    # select_device(0)
 
     game = 'CartPole-v0'
     # dqn_feature(game=game)
@@ -527,8 +528,8 @@ if __name__ == '__main__':
     game = 'reacher'
 
     # a2c_continuous(game=game, seed=seed, output_dir=output_dir)
-    # ppo_continuous(game=game, seed=seed, output_dir=output_dir)
-    ddpg_continuous(game=game, seed=seed, output_dir=output_dir)
+    ppo_continuous(game=game, seed=seed, output_dir=output_dir)
+    # ddpg_continuous(game=game, seed=seed, output_dir=output_dir)
     # td3_continuous(game=game, seed=seed, output_dir=output_dir)
 
     game = 'BreakoutNoFrameskip-v4'
