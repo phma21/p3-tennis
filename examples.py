@@ -434,9 +434,9 @@ def ppo_continuous(**kwargs):
     print("Will perform", network_updates_per_rollout, "steps per rollout and", network_updates_per_rollout * (config.max_steps / config.rollout_length), 'steps in total')
 
     ppo_agent = PPOAgent(config)
-    ppo_agent.load('good_models/PPOAgent-reacher--190913-083243-seed_163894-983040')  # <- perfect agent ;)
-    # run_steps(ppo_agent)
-    run_eval(ppo_agent, train_mode=True)
+    # ppo_agent.load('good_models/PPOAgent-reacher--190913-083243-seed_163894-983040')  # <- perfect agent ;)
+    run_steps(ppo_agent)
+    # run_eval(ppo_agent, train_mode=False)
 
 
 # DDPG

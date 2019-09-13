@@ -1,45 +1,58 @@
-# Udacity Deep Reinforcement Learning Nano degree
+# Udacity Deep Reinforcement Learning nano degree
 
-> This repo was forked from todo, big thanks!
+> This repo was forked from https://github.com/ShangtongZhang/DeepRL . Big thanks to the author for providing well 
+structured implementations of popular algorithmns, as well as a nice framework for evaluation!
 
-## Project 2: Continious control
+## Project 2: Continuous control
 
-This repository contains my solution to the second project of Udacity deep RL Nanodegree.
+This repository contains my solution to the second project of Udacity deep RL Nanodegree. The goal of this project is
+to solve the Unity Agent environment Reacher.
 
-- fork shaangtong
-- create a openai gym wrapper for unity agent env (note that for newer versions this exisists for unity agent as well)
-- after initial failed attempts, get some help from: <websites> to try different params
-https://medium.com/aureliantactics/ppo-hyperparameters-and-ranges-6fc2d29bccbe
-https://github.com/llSourcell/Unity_ML_Agents/blob/master/docs/best-practices-ppo.md
-- turns out that compared to gym, I need much larger batch sizes and rollouts (I use 8 episodes now -> ~8000 steps)
+After forking from the original implementation, I needed to adapt the unity agents environment provided by Udacity to work with the original code.
+To achieve this, I wrapped the Unity Agents environment into a gym.Wrapper object, such that the Reacher environment behaves like a gym one.
 
-
-lessons learned:
-- bigger batch size == always better
-- bigger rollout == always better, however slower learning, as we need to throw away after each network update step
-- PPO is a really good algorithm and shangtongs implementation / eval framework is awesome
+After some time spent on tuning the parameters for PPO, as well as reading some resources how to tune PPO, 
+I was able to solve the Reacher environment.
 
 
-details:
-network: both actor and critic (advantage estimator): (256, 256)
-- copy rest of params over
-
-
-eval:
-- after training with seed x for 1 Mio iterations, i run eval on 100 episodes.
-result: episodic_return_test mean: 37.66 std: 0.22
-
-![eval image](good_models/PPO-eval.png "eval image]")
-![train image](good_models/PPO-train.png "train image")
+### Lessons learned
+- In comparision to the environments of OpenAI Gym, the Reacher environment appears to be rather hard to solve and the rewards are a lot more sparse. 
+Therefore, the amount of collected trajectories for each network update played a big role. I ended up collecting about 8 episodes for each optimization phase.
+- A bigger batch size is almost always better
+- A bigger rollout is always better, but of course slows down your training. For noisy environments, the rollout should cover multiple episodes
+- PPO is a really good algorithm which - in contrast to others - does not suffer performance drops in later stages (given that parameters are tuned properly)
 
 
 
-installation:
-- docker build .., or use dockerfile provided at: todo!
+### Installation
+To build the complete environment with Mojoco and all contents of the original framework, you may have a look at the 
+original readme (ORIGINAL_README.md) and/or follow the steps performed in the Dockerfile.
 
-further steps:
-- more finetuning, could very easily try out the other algorithmns implemented here, like DDPG or TD3
+For a more simple setup sufficient to run Reacher Env, you may follow those steps:
+
+* `
+pip3 install -r requirements_just_reacher.txt
+`
+* `
+pip3 install git+https://github.com/openai/baselines.git@8e56dd#egg=baselines
+`
+* `
+wget https://s3-us-west-1.amazonaws.com/udacity-drlnd/P2/Reacher/one_agent/Reacher_Linux.zip
+`
+`
+unzip Reacher_Linux.zip
+`
+> If pip install gets you "ERROR: unityagents 0.4.0 has requirement protobuf==3.5.2, but you'll have protobuf 3.9.1 which is incompatible.",
+no worries, it still works ;-)
+
+### How to run
+`
+python3 examples.py
+`
+
+By default, it will load the best performing model in evaluation mode.
+To train the agent, all you need to do is comment out loading of the model (line 437) and uncomment line 439.
 
 
-# todo: 
-- tell seed and adapt requirements (dockerfile) to run properly
+### Results & details
+See Report.md
