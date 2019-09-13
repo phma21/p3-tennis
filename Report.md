@@ -15,7 +15,6 @@ The PPO parameters are as follows:
 * Mini batch size: 4096
 * Train for one million steps
 
-
 ### Training
 Using the above parameters, the agent stably converges close to the optimal reward:
 

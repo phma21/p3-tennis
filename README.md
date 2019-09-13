@@ -15,6 +15,15 @@ After some time spent on tuning the parameters for PPO, as well as reading some 
 I was able to solve the Reacher environment.
 
 
+### Reacher env
+The goal of Reacher environment is to learn how to move and hold a double jointed robot arm into a spheric area.
+To make things harder, that area moves around the arm at different speed in every episode.
+There are 4 continuous actions possible, corresponding to the torque applicable to the joints.
+The observation space contains 26 variables corresponding to physical attributes of the joints and the sphere.
+The agent is rewarded with +0.1 if the agent's hand rests inside the goal area for one step, zero reward otherwise.
+The environment is considered to be solved if an agent manages to achieve a mean reward of 30 over a series of 100 episodes.
+
+
 ### Lessons learned
 - In comparision to the environments of OpenAI Gym, the Reacher environment appears to be rather hard to solve and the rewards are a lot more sparse. 
 Therefore, the amount of collected trajectories for each network update played a big role. I ended up collecting about 8 episodes for each optimization phase.
