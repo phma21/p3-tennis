@@ -14,7 +14,6 @@ import torch
 import time
 from .torch_utils import *
 from pathlib import Path
-from deep_rl.component.envs import _reacher_instance
 
 
 def run_steps(agent):
@@ -38,6 +37,14 @@ def run_steps(agent):
             break
         agent.step()
         agent.switch_task()
+
+
+def run_eval(agent, train_mode=False):
+    config = agent.config
+    if config.game == 'reacher':
+        agent.task.env.envs[0].env.train_mode = train_mode
+    agent.eval_episodes()
+    agent.close()
 
 
 def norm_and_join(basepath, subpath):

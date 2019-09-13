@@ -52,11 +52,23 @@ class BaseAgent:
         for ep in range(self.config.eval_episodes):
             total_rewards = self.eval_episode()
             episodic_returns.append(np.sum(total_rewards))
+            self.logger.add_scalar('episodic_return_test', episodic_returns[-1], ep)
+        self.logger.info('steps %d, episodic_return_test %.2f(%.2f)' % (
+            self.total_steps, np.mean(episodic_returns), np.std(episodic_returns) / np.sqrt(len(episodic_returns))
+        ))
+        return {
+            'episodic_return_test': np.mean(episodic_returns),
+        }
+
+    def eval_episodes_old(self):
+        episodic_returns = []
+        for ep in range(self.config.eval_episodes):
+            total_rewards = self.eval_episode()
+            episodic_returns.append(np.sum(total_rewards))
         self.logger.info('steps %d, episodic_return_test %.2f(%.2f)' % (
             self.total_steps, np.mean(episodic_returns), np.std(episodic_returns) / np.sqrt(len(episodic_returns))
         ))
         self.logger.add_scalar('episodic_return_test', np.mean(episodic_returns), self.total_steps)
-        # self.set_train_mode(True)
         return {
             'episodic_return_test': np.mean(episodic_returns),
         }

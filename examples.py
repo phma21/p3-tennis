@@ -424,18 +424,19 @@ def ppo_continuous(**kwargs):
     # My stuff
     config.save_interval = 98304
     config.eval_interval = 8192
-    config.eval_episodes = 3
+    config.eval_episodes = 100
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
     assert config.save_interval % config.rollout_length == 0
 
-    # gradient updates per 1 million steps / total gradient updates:
-    # ((rollout_length / minibatch_size) * optim_epochs) * (total_steps / rollout_length)
+    network_updates_per_rollout = (config.rollout_length / config.mini_batch_size) * config.optimization_epochs
+    print("Will perform", network_updates_per_rollout, "steps per rollout and", network_updates_per_rollout * (config.max_steps / config.rollout_length), 'steps in total')
 
     ppo_agent = PPOAgent(config)
-    ppo_agent.load('data/PPOAgent-reacher--190913-083243-seed_163894-983040') # <- perfect agent ;)
-    run_steps(ppo_agent)
+    ppo_agent.load('good_models/PPOAgent-reacher--190913-083243-seed_163894-983040')  # <- perfect agent ;)
+    # run_steps(ppo_agent)
+    run_eval(ppo_agent, train_mode=True)
 
 
 # DDPG

@@ -151,7 +151,8 @@ class Plotter:
                     for k in range(y.shape[0]):
                         plt.plot(x, y[i], label=label, color=color)
                         label = None
-            plt.xlabel('steps')
+            plt.xlabel('steps' if kwargs['tag'] == self.RETURN_TRAIN else 'episodes')
+            plt.ylim(0, 41)
             if not i:
                 plt.ylabel(kwargs['tag'])
             plt.title(game)

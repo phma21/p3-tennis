@@ -12,8 +12,8 @@ def plot_ppo():
     ]
 
     patterns = [
-        # 'remark_ppo',
-        '171913'
+        # '190913-083243-seed_163894'  # < the good one while training, solved env, trained from scratch in 1 mio steps
+        '190913-130706-seed_29164'   # < evaluation of the good one
     ]
 
     labels = [
@@ -26,16 +26,15 @@ def plot_ppo():
                        downsample=0,
                        labels=labels,
                        right_align=False,
-                       tag=plotter.RETURN_TRAIN,
+                       tag=plotter.RETURN_TEST,
                        root='/home/philipp/udacity/DeepRL/tf_log/',
-                       interpolation=100,
+                       interpolation=None,  # 100,
                        window=0,
                        )
 
-    # plt.show()
     plt.tight_layout()
-    # plt.savefig('images/PPO.png', bbox_inches='tight')
-    plt.show(bbox_inches='tight')
+    plt.savefig('good_models/PPO-eval.png', bbox_inches='tight')
+    # plt.show(bbox_inches='tight')
 
 
 if __name__ == '__main__':
