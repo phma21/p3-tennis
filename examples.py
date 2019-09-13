@@ -405,34 +405,36 @@ def ppo_continuous(**kwargs):
     config.eval_env = config.task_fn()
 
     config.network_fn = lambda: GaussianActorCriticNet(
-        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(128, 128)),
-        critic_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(128, 128)))
+        config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(256, 256)),
+        critic_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(256, 256)))
     config.optimizer_fn = lambda params: torch.optim.Adam(params, 3e-4, eps=1e-5)
     config.discount = 0.99
     config.use_gae = True
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
     # Each reacher episode is 1000 steps
-    config.rollout_length = 4096  # old: 2048
-    config.optimization_epochs = 10
-    config.mini_batch_size = 1024  # old: 64
+    config.rollout_length = 8192  # old: 2048
+    config.optimization_epochs = 40   # old 10
+    config.mini_batch_size = 4096  # old: 64
     config.ppo_ratio_clip = 0.2
-    config.log_interval = 4096
+    config.log_interval = 8192
     config.max_steps = 1e6
     config.state_normalizer = MeanStdNormalizer()
 
     # My stuff
-    config.save_interval = 51200 * 2
-    # config.eval_interval = 2048
-    # config.eval_episodes = 1
+    config.save_interval = 98304
+    config.eval_interval = 8192
+    config.eval_episodes = 3
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
     assert config.save_interval % config.rollout_length == 0
 
+    # gradient updates per 1 million steps / total gradient updates:
+    # ((rollout_length / minibatch_size) * optim_epochs) * (total_steps / rollout_length)
+
     ppo_agent = PPOAgent(config)
-    load_from_step = 921600
-    # ppo_agent.load('data/%s-%s-%d' % (ppo_agent.__class__.__name__, config.tag, load_from_step))
+    ppo_agent.load('data/PPOAgent-reacher--190913-083243-seed_163894-983040') # <- perfect agent ;)
     run_steps(ppo_agent)
 
 
