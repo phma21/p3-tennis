@@ -24,25 +24,35 @@ class PPOAgent(BaseAgent):
         config = self.config
         storage = Storage(config.rollout_length)
         states = self.states
-        for _ in range(config.rollout_length):
-            prediction = self.network(states)
-            next_states, rewards, terminals, info = self.task.step(to_np(prediction['a']))
-            self.record_online_return(info)
-            rewards = config.reward_normalizer(rewards)
-            next_states = config.state_normalizer(next_states)
-            storage.add(prediction)
-            storage.add({'r': tensor(rewards).unsqueeze(-1),
-                         'm': tensor(1 - terminals).unsqueeze(-1),
-                         's': tensor(states)})
-            states = next_states
-            self.total_steps += config.num_workers
+        for _ in range(config.rollout_length // 2):
+            prediction_both = (self.network(states[0:1]), self.network(states[1:2]))
+            next_states_both, rewards_both, terminals_both, info_both = self.task.step(
+                np.vstack([
+                    to_np(prediction_both[0]['a']),
+                    to_np(prediction_both[1]['a'])]))
+
+            for i in range(2):
+                rewards, terminals, info = rewards_both[i:i+1], np.array(terminals_both[i:i+1]), info_both[i:i+1]
+                prediction = prediction_both[i]
+
+                self.record_online_return(info)
+                rewards = config.reward_normalizer(rewards)
+                # next_states = config.state_normalizer(next_states)
+                storage.add(prediction)
+                storage.add({'r': tensor(rewards).unsqueeze(-1),
+                             'm': tensor(1 - terminals).unsqueeze(-1),
+                             's': tensor(states[i:i+1])})  # take state from agent i, don't loose dimension: [?, state_size)
+
+            next_states_both = config.state_normalizer(next_states_both)
+            states = next_states_both
+            self.total_steps += 2
 
         self.states = states
-        prediction = self.network(states)
+        prediction = self.network(states[0:1])  # only train with single agent, but that doesnt really matter, as trajectories are collected for both
         storage.add(prediction)
         storage.placeholder()
 
-        advantages = tensor(np.zeros((config.num_workers, 1)))
+        advantages = tensor(np.zeros((1, 1)))
         returns = prediction['v'].detach()
         for i in reversed(range(config.rollout_length)):
             returns = storage.r[i] + config.discount * storage.m[i] * returns

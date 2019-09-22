@@ -63,12 +63,7 @@ def make_env(env_id, seed, rank, episode_life=True):
     return _thunk
 
 
-class TennisWrapper(gym.Env):
-
-    metadata = {
-        # 'render.modes': ['human'],
-        'render.modes': [],
-    }
+class TennisVecEnv(gym.Env):
 
     reward_range = (-0.01, 0.1)
 
@@ -97,33 +92,42 @@ class TennisWrapper(gym.Env):
         # examine the state space
         states = env_info.vector_observations
         state_size = states.shape[1]
-        print('There are {} agents. Each observes a state with length: {}'.format(states.shape[0], state_size))
+        print('There are {} agents. Each agent observes state size: {}'.format(states.shape[0], state_size))
         print('The state for the first agent looks like:', states[0])
 
         self.unity_env = env
         self.brain_name = brain_name
+        self.brain = brain
 
-        # action vector is between -1 and +1
-        action_space = np.array([1] * brain.vector_action_space_size)
-        # 100 is a guess from me ;-)
-        state_space = np.array([100] * brain.vector_observation_space_size)
+        # # action vector is between -1 and +1
+        action_space = np.array(np.ones(action_size))
+        # # 100 is a guess from me ;-)
+        state_space = np.array(np.full(state_size, fill_value=100))
 
-        # Need to be set
+        # # Need to be set
         self.action_space = Box(-action_space, action_space, dtype=np.float32)
         self.observation_space = Box(-state_space, state_space, dtype=np.float32)
 
-    # todo: split actions, states, rewards and dones into 2, one for each agent
-    def step(self, action):
-        env_info = self.unity_env.step(action)[self.brain_name]
-        state = env_info.vector_observations[0]  # get the current state
-        reward = env_info.rewards[0]  # get the reward
-        done = env_info.local_done[0]  # see if episode has finished
+        self.last_step = None
+
+    def step_both_agents(self, actions):
+        env_info = self.unity_env.step(actions)[self.brain_name]
+        state = env_info.vector_observations  # get the current state
+        reward = env_info.rewards  # get the reward
+        done = env_info.local_done  # see if episode has finished
 
         return state, reward, done, {}
 
+    def step(self, action):
+        return self.step_both_agents(action)
+        # raise NotImplementedError('Cannot step for a single agent!')
+
     def reset(self):
         env_info = self.unity_env.reset(train_mode=self.train_mode)[self.brain_name]
-        return env_info.vector_observations[0]  # Return current state
+        return env_info.vector_observations  # Return current state
+
+    def close(self):
+        self.unity_env.close()
 
     def render(self, mode='human'):
         # no-op
@@ -133,18 +137,92 @@ class TennisWrapper(gym.Env):
         # no-op
         return [0]
 
+
+class TennisSingleAgentWrapper(gym.Env):
+
+    metadata = {
+        # 'render.modes': ['human'],
+        'render.modes': [],
+    }
+
+    reward_range = (-0.01, 0.1)
+
+    def __init__(self, tennis_single_env: TennisVecEnv, agent_number):
+        assert agent_number in (0, 1)
+        print("Creating for agent ", agent_number)
+
+        self.tennis_single_env = tennis_single_env
+
+        self.train_mode = True
+
+        # size of each action
+        action_size = tennis_single_env.action_size[1]
+        print('Size of each action:', action_size)
+
+        # examine the state space
+        state_size = tennis_single_env.state_size[1]
+        print('This agent observes a state with length: ', state_size)
+
+        # todo: is the action vector really between -1 and +1? not documented ..
+        # # action vector is between -1 and +1
+        action_space = np.array([1] * action_size)
+        # # 100 is a guess from me ;-)
+        state_space = np.array([100] * state_size)
+        #
+        # # Need to be set
+        self.action_space = Box(-action_space, action_space, dtype=np.float32)
+        self.observation_space = Box(-state_space, state_space, dtype=np.float32)
+
+        print('(gym) action space: ', self.action_space)
+        print('(gym) observation space: ', self.observation_space)
+
+    # todo: split actions, states, rewards and dones into 2, one for each agent
+    # create another object, holding the actual env
+    # and two objects handling agent 0 and agent 1.
+    # > two make calls should be done for train tasks
+    # plus, one for eval.. however eval will not work so i have to re-write to use both agents somehow..
+    # Probably: combine outputs from both agents and feed them into the "main" environment
+
+    def step(self, action):
+        # todo..
+        # state_both, reward_both_
+
+        return state, reward, done, {}
+
+    # this would reset twice..
+    def reset(self):
+        return self.tennis_single_env.reset()
+
+    def render(self, mode='human'):
+        # no-op
+        raise NotImplementedError()
+
+    def seed(self, seed=None):
+        # no-op
+        return [0]
+
+    # wrong, second call will fail
     def close(self):
-        self.unity_env.close()
+        self.tennis_single_env.close()
+
+    @property
+    def train_mode(self):
+        return self.tennis_single_env.train_mode
+
+    @train_mode.setter
+    def train_mode(self, train_mode):
+        self.tennis_single_env.train_mode = train_mode
 
 
-_tennis_instance = None
+_tennis_vec_env_instance = None
+_tennis_instace_counter = 0
 
 
 def make_tennis():
-    global _tennis_instance
-    if not _tennis_instance:
-        _tennis_instance = TennisWrapper()
-    return _tennis_instance
+    global _tennis_vec_env_instance
+    if not _tennis_vec_env_instance:
+        _tennis_vec_env_instance = TennisVecEnv()
+    return _tennis_vec_env_instance
 
 
 _reacher_instance = None
@@ -237,13 +315,14 @@ class OriginalReturnWrapper(gym.Wrapper):
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        self.total_rewards += reward
-        if done:
+        self.total_rewards += sum(reward)
+        if any(done):
             info['episodic_return'] = self.total_rewards
             self.total_rewards = 0
+            obs = self.env.reset()  # reset if any agent reports done
         else:
             info['episodic_return'] = None
-        return obs, reward, done, info
+        return obs, reward, done, (info, info)
 
     def reset(self):
         return self.env.reset()
@@ -335,12 +414,17 @@ class Task:
                  seed=np.random.randint(int(1e5))):
         if log_dir is not None:
             mkdir(log_dir)
-        envs = [make_env(name, seed, i, episode_life) for i in range(num_envs)]
-        if single_process:
-            Wrapper = DummyVecEnv
+
+        if name == 'tennis':
+            self.env = OriginalReturnWrapper(TennisVecEnv())
         else:
-            Wrapper = SubprocVecEnv
-        self.env = Wrapper(envs)
+            envs = [make_env(name, seed, i, episode_life) for i in range(num_envs)]
+            if single_process:
+                Wrapper = DummyVecEnv
+            else:
+                Wrapper = SubprocVecEnv
+            self.env = Wrapper(envs)
+
         self.name = name
         self.observation_space = self.env.observation_space
         self.state_dim = int(np.prod(self.env.observation_space.shape))

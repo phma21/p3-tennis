@@ -401,8 +401,13 @@ def ppo_continuous(**kwargs):
     config = Config()
     config.merge(kwargs)
 
-    config.task_fn = lambda: Task(config.game)
-    config.eval_env = config.task_fn()
+    # why do I suddently need this, compared to reacher env?
+    config.state_dim = 24
+    config.action_dim = 2
+
+    config.num_workers = 2
+    config.task_fn = lambda: Task(config.game, num_envs=config.num_workers)
+    #config.eval_env = config.task_fn()
 
     config.network_fn = lambda: GaussianActorCriticNet(
         config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(256, 256)),
@@ -413,9 +418,9 @@ def ppo_continuous(**kwargs):
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
     # Each reacher episode is 1000 steps
-    config.rollout_length = 8192  # old: 2048
+    config.rollout_length = 8192  # testing: 64  # good: 8192
     config.optimization_epochs = 40   # old 10
-    config.mini_batch_size = 4096  # old: 64
+    config.mini_batch_size = 4096  # testing: 32  # good: 4096
     config.ppo_ratio_clip = 0.2
     config.log_interval = 8192
     config.max_steps = 1e6
@@ -423,20 +428,21 @@ def ppo_continuous(**kwargs):
 
     # My stuff
     config.save_interval = 98304
-    config.eval_interval = 8192
-    config.eval_episodes = 100
+    #config.eval_interval = 8192
+    #config.eval_episodes = 100
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
     assert config.save_interval % config.rollout_length == 0
+    assert config.rollout_length % 2 == 0
 
     network_updates_per_rollout = (config.rollout_length / config.mini_batch_size) * config.optimization_epochs
     print("Will perform", network_updates_per_rollout, "steps per rollout and", network_updates_per_rollout * (config.max_steps / config.rollout_length), 'steps in total')
 
     ppo_agent = PPOAgent(config)
     # ppo_agent.load('good_models/PPOAgent-reacher--190913-083243-seed_163894-983040')  # <- perfect agent ;)
-    # run_steps(ppo_agent)
-    run_eval(ppo_agent, train_mode=False)
+    run_steps(ppo_agent)
+    # run_eval(ppo_agent, train_mode=False)
 
 
 # DDPG
