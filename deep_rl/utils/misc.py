@@ -41,8 +41,8 @@ def run_steps(agent):
 
 def run_eval(agent, train_mode=False):
     config = agent.config
-    if config.game == 'reacher':
-        agent.task.env.envs[0].env.train_mode = train_mode
+    if config.game == 'tennis':
+        agent.task.env.env.train_mode = train_mode
     agent.eval_episodes()
     agent.close()
 

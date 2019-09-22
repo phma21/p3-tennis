@@ -41,14 +41,16 @@ class PPOAgent(BaseAgent):
                 storage.add(prediction)
                 storage.add({'r': tensor(rewards).unsqueeze(-1),
                              'm': tensor(1 - terminals).unsqueeze(-1),
-                             's': tensor(states[i:i+1])})  # take state from agent i, don't loose dimension: [?, state_size)
+                             's': tensor(states[i:i+1])})
 
             next_states_both = config.state_normalizer(next_states_both)
             states = next_states_both
             self.total_steps += 2
 
         self.states = states
-        prediction = self.network(states[0:1])  # only train with single agent, but that doesnt really matter, as trajectories are collected for both
+        # only train with single agent, but that doesnt matter, as trajectories are collected for both and they
+        # share the network
+        prediction = self.network(states[0:1])
         storage.add(prediction)
         storage.placeholder()
 
@@ -96,6 +98,22 @@ class PPOAgent(BaseAgent):
     def eval_step(self, state):
         self.config.state_normalizer.set_read_only()
         state = self.config.state_normalizer(state)
-        prediction = self.network(state)
+
+        predictions = [self.network(state[i:i+1]) for i in range(2)]
+
         self.config.state_normalizer.unset_read_only()
-        return to_np(prediction['a'])
+        return [to_np(prediction['a']) for prediction in predictions]
+
+    def eval_episode(self):
+        env = self.config.eval_env
+        states = env.reset()
+        while True:
+            actions = self.eval_step(states)
+            self.task.step(np.vstack([to_np(action['a']) for action in actions]))
+
+            states, rewards, dones, infos = env.step(actions)
+            # Take maximum of both agents
+            ret = [info[0]['episodic_return'] for info in infos]
+            if any(ret):
+                break
+        return max(ret)
