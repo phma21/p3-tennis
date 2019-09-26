@@ -429,7 +429,7 @@ def ppo_continuous(**kwargs):
     # My stuff
     config.save_interval = 98304
     #config.eval_interval = 8192
-    #config.eval_episodes = 100
+    config.eval_episodes = 100
 
     assert config.eval_interval % config.rollout_length == 0
     assert config.log_interval % config.rollout_length == 0
@@ -440,9 +440,10 @@ def ppo_continuous(**kwargs):
     print("Will perform", network_updates_per_rollout, "steps per rollout and", network_updates_per_rollout * (config.max_steps / config.rollout_length), 'steps in total')
 
     ppo_agent = PPOAgent(config)
-    #ppo_agent.load('good_models/PPOAgent-tennis--190922-195224-seed_18559-983040')  # <- perfect agent ;)
-    run_steps(ppo_agent)
-    #run_eval(ppo_agent, train_mode=False)
+    ppo_agent.load('good_models/PPOAgent-tennis--190922-195224-seed_18559-983040')  # <- perfect agent ;)
+    # run_steps(ppo_agent)
+    run_eval(ppo_agent, train_mode=False, player_agent=True)
+    # Result of 100 episodes eval: logger-tennis--190923-085312-seed_699333
 
 
 # DDPG

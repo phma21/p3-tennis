@@ -39,11 +39,11 @@ def run_steps(agent):
         agent.switch_task()
 
 
-def run_eval(agent, train_mode=False):
+def run_eval(agent, train_mode=False, player_agent=False):
     config = agent.config
     if config.game == 'tennis':
         agent.task.env.env.train_mode = train_mode
-    agent.eval_episodes()
+    agent.eval_episodes(player_agent)
     agent.close()
 
 

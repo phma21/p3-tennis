@@ -36,7 +36,7 @@ class BaseAgent:
     def eval_step(self, state):
         raise NotImplementedError
 
-    def eval_episode(self):
+    def eval_episode(self, player_agent=False):
         env = self.config.eval_env
         state = env.reset()
         while True:
@@ -47,10 +47,10 @@ class BaseAgent:
                 break
         return ret
 
-    def eval_episodes(self):
+    def eval_episodes(self, player_agent=False):
         episodic_returns = []
         for ep in range(self.config.eval_episodes):
-            total_rewards = self.eval_episode()
+            total_rewards = self.eval_episode(player_agent)
             episodic_returns.append(np.sum(total_rewards))
             self.logger.add_scalar('episodic_return_test', episodic_returns[-1], ep)
         self.logger.info('steps %d, episodic_return_test %.2f(%.2f)' % (

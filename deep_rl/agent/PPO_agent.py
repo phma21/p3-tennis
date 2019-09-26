@@ -3,6 +3,7 @@
 # Permission given to modify the code as long as you keep this        #
 # declaration at the top                                              #
 #######################################################################
+from pynput.keyboard import Key, Listener
 
 from ..network import *
 from ..component import *
@@ -104,16 +105,67 @@ class PPOAgent(BaseAgent):
         self.config.state_normalizer.unset_read_only()
         return [to_np(prediction['a']) for prediction in predictions]
 
-    def eval_episode(self):
-        env = self.config.eval_env
+    def eval_episode(self, player_agent=False):
+        if player_agent:
+            return self._eval_episode_player()
+        else:
+            return self._eval_episode_player()
+
+    def _eval_episode(self):
+        env = self.task
         states = env.reset()
+
         while True:
             actions = self.eval_step(states)
-            self.task.step(np.vstack([to_np(action['a']) for action in actions]))
+            states, rewards, dones, infos = env.step(np.vstack(actions))
 
-            states, rewards, dones, infos = env.step(actions)
             # Take maximum of both agents
-            ret = [info[0]['episodic_return'] for info in infos]
+            ret = [info['episodic_return'] for info in infos]
             if any(ret):
                 break
         return max(ret)
+
+    def _eval_episode_player(self):
+        env = self.task
+        states = env.reset()
+
+        keyhandler = KeyHandler()
+        listener = Listener(on_press=keyhandler.on_press, on_release=keyhandler.on_release)
+        listener.start()
+
+        while True:
+            actions = self.eval_step(states)
+
+            actions[0] = keyhandler.player_action
+
+            states, rewards, dones, infos = env.step(np.vstack(actions))
+
+            # Take maximum of both agents
+            ret = [info['episodic_return'] for info in infos]
+            if any(ret):
+                break
+        listener.stop()
+        return max(ret)
+
+
+class KeyHandler:
+
+    def __init__(self):
+        self.player_action = np.array((0., 0.))
+
+    def on_press(self, key):
+        # global player_action
+        if key == Key.up:
+            self.player_action = np.array((0., 10.))
+        elif key == Key.down:
+            self.player_action = np.array((0, -10.))
+        elif key == Key.left:
+            self.player_action = np.array((0.5, 0.))
+        elif key == Key.right:
+            self.player_action = np.array((-0.5, 0.))
+        else:
+            self.player_action = np.array((0., 0.))
+
+    def on_release(self, key):
+        if key in (Key.up, Key.down, Key.left, Key.right):
+            self.player_action = np.array((0., 0.))
