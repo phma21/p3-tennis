@@ -8,12 +8,12 @@ from deep_rl import Plotter
 def plot_ppo():
     plotter = Plotter()
     games = [
-        'reacher',
+        'tennis',
     ]
 
     patterns = [
-        # '190913-083243-seed_163894'  # < the good one while training, solved env, trained from scratch in 1 mio steps
-        '190913-130706-seed_29164'   # < evaluation of the good one
+        # '190922-195224-seed_18559'  # < the good one while training, solved env, trained from scratch in 1 mio steps
+        '190923-085312-seed_699333'   # < evaluation of the good one
     ]
 
     labels = [
@@ -22,19 +22,19 @@ def plot_ppo():
 
     plotter.plot_games(games=games,
                        patterns=patterns,
-                       agg='mean',
+                       agg='scatter',
                        downsample=0,
                        labels=labels,
                        right_align=False,
                        tag=plotter.RETURN_TEST,
-                       root='/home/philipp/udacity/DeepRL/tf_log/',
-                       interpolation=None,  # 100,
+                       root='./tf_log/',
+                       interpolation=0,  # 100,
                        window=0,
                        )
 
     plt.tight_layout()
-    plt.savefig('good_models/PPO-eval.png', bbox_inches='tight')
-    # plt.show(bbox_inches='tight')
+    # plt.savefig('good_models/PPO-tennis-eval.png', bbox_inches='tight')
+    plt.show(bbox_inches='tight')
 
 
 if __name__ == '__main__':

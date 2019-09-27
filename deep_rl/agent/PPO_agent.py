@@ -109,7 +109,7 @@ class PPOAgent(BaseAgent):
         if player_agent:
             return self._eval_episode_player()
         else:
-            return self._eval_episode_player()
+            return self._eval_episode()
 
     def _eval_episode(self):
         env = self.task

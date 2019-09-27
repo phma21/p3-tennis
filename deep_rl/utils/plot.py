@@ -8,6 +8,8 @@ import numpy as np
 import os
 import re
 
+import seaborn
+
 
 class Plotter:
     COLORS = ['blue', 'green', 'red', 'cyan', 'magenta', 'yellow', 'black', 'purple', 'pink',
@@ -137,6 +139,7 @@ class Plotter:
                 color = self.COLORS[j]
                 log_dirs = self.filter_log_dirs(pattern='.*%s.*%s' % (game, p), **kwargs)
                 x, y = self.load_results(log_dirs, **kwargs)
+
                 if kwargs['downsample']:
                     indices = np.linspace(0, len(x) - 1, kwargs['downsample']).astype(np.int)
                     x = x[indices]
@@ -147,12 +150,17 @@ class Plotter:
                     self.plot_mean(y, x, label=label, color=color, error='std')
                 elif kwargs['agg'] == 'median':
                     self.plot_median_std(y, x, label=label, color=color)
+                elif kwargs['agg'] == 'linreg':
+                    seaborn.regplot(x, y[0])
+                elif kwargs['agg'] == 'scatter':
+                    seaborn.scatterplot(x, y[0])
+                    seaborn.lineplot([0, 100], y[0].mean().repeat(2))
                 else:
                     for k in range(y.shape[0]):
                         plt.plot(x, y[i], label=label, color=color)
                         label = None
             plt.xlabel('steps' if kwargs['tag'] == self.RETURN_TRAIN else 'episodes')
-            plt.ylim(0, 41)
+            # plt.ylim(0, 41)
             if not i:
                 plt.ylabel(kwargs['tag'])
             plt.title(game)

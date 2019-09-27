@@ -401,13 +401,13 @@ def ppo_continuous(**kwargs):
     config = Config()
     config.merge(kwargs)
 
-    # why do I suddently need this, compared to reacher env?
+    # Those params would secretly by set, if eval_env is set. As this is not the case, let's specify them here.
     config.state_dim = 24
     config.action_dim = 2
 
     config.num_workers = 2
     config.task_fn = lambda: Task(config.game, num_envs=config.num_workers)
-    # config.eval_env = config.task_fn()
+    # config.eval_env = config.task_fn()  # keep out, this will break stuff
 
     config.network_fn = lambda: GaussianActorCriticNet(
         config.state_dim, config.action_dim, actor_body=FCBody(config.state_dim, gate=torch.tanh, hidden_units=(256, 256)),
@@ -417,18 +417,16 @@ def ppo_continuous(**kwargs):
     config.use_gae = True
     config.gae_tau = 0.95
     config.gradient_clip = 0.5
-    # Each reacher episode is 1000 steps TODO: how long is one tennis episode?;)
-    config.rollout_length = 8192  # testing: 64  # good: 8192
-    config.optimization_epochs = 40   # old 10
-    config.mini_batch_size = 4096  # testing: 32  # good: 4096
+    config.rollout_length = 8192
+    config.optimization_epochs = 40
+    config.mini_batch_size = 4096
     config.ppo_ratio_clip = 0.2
     config.log_interval = 8192
     config.max_steps = 1e6
     config.state_normalizer = MeanStdNormalizer()
 
-    # My stuff
     config.save_interval = 98304
-    #config.eval_interval = 8192
+    # config.eval_interval = 8192
     config.eval_episodes = 100
 
     assert config.eval_interval % config.rollout_length == 0
@@ -441,9 +439,16 @@ def ppo_continuous(**kwargs):
 
     ppo_agent = PPOAgent(config)
     ppo_agent.load('good_models/PPOAgent-tennis--190922-195224-seed_18559-983040')  # <- perfect agent ;)
+
+    # Train both agents for 1 million steps
     # run_steps(ppo_agent)
-    run_eval(ppo_agent, train_mode=False, player_agent=True)
-    # Result of 100 episodes eval: logger-tennis--190923-085312-seed_699333
+
+    # Evaluate the agents on 100 episodes
+    # run_eval(ppo_agent, train_mode=True)
+
+    # Play against one agent yourself!
+    # Use arrow keys to move left, right or jump
+    run_eval(ppo_agent, player_agent=True)
 
 
 # DDPG
