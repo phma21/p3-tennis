@@ -152,6 +152,8 @@ class Plotter:
                     self.plot_median_std(y, x, label=label, color=color)
                 elif kwargs['agg'] == 'linreg':
                     seaborn.regplot(x, y[0])
+                elif kwargs['agg'] == 'line':
+                    seaborn.lineplot(x, y[0], ci=None)
                 elif kwargs['agg'] == 'scatter':
                     seaborn.scatterplot(x, y[0])
                     seaborn.lineplot([0, 100], y[0].mean().repeat(2))

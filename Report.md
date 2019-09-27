@@ -16,20 +16,36 @@ The PPO parameters are as follows:
 * Train for one million steps
 
 ### Training
-Using the above parameters, the agent stably converges close to the optimal reward:
+Using the above parameters, two agents using **the same action and critic network** are trained.
+After 1 million epochs, they are able to perform well in most of the episodes.
+However it's not able to consistently score a high reward. Every now and than they looses an episode rather quickly.
 
-![train image](good_models/PPO-train.png "train image")
+The first plot shows the episodic return of training on 1 million steps, connecting each data point with a line.
+For better interpretability, the second plot fits a linear regression on the same data.
+
+![train image](good_models/PPO-tennis-train.png "train image")
+![train image](good_models/PPO-tennis-train-linreg.png "train image linreg")
 
 
 ### Evaluation
-After training for 1 million iterations, the agent was evaluated on 100 episodes.
-The mean reward is 37.66 with a standard deviation of 0.22.
+After training for 1 million iterations, the agent is evaluated on 100 episodes.
+The mean reward is 3.99 with a standard deviation of 2.07.
 
-![eval image](good_models/PPO-eval.png "eval image]")
+![eval image](good_models/PPO-tennis-eval.png "eval image]")
 
 
-### Further steps:
+### Playing against the agent
+Another way to evaluate performance of the agent is to simply play against it, or to watch it playing against itself.
+Watching the agent playing itself, it can be observed the agent found a kind of local minima: It learned to always
+pass the ball in the same manner, thus making it easy for the other agent (itself!) to catch it.
+
+I confirm this by playing against the agent myself, and finding out it performs bad on fast or low approaching balls.
+To train an even better agent, the reward would need to be altered to train for competetive behavior, as this 
+requires the agent to learn how to handle more hard to catch balls as well.
+
+### Further steps
+- Train competetive behavior (as described above)
 - As PPO comes with a host of different parameters to look at, performance could certainly
 be improved by further fine tuning of parameters.
 - Additionally, there are 3 more algorithms for continuous control implemented within this framework: 
-TD3, DDPG and A2C. One could also try to solve Reacher using those algorithms
+TD3, DDPG and A2C. One could also try out those.

@@ -33,7 +33,7 @@ def plot_ppo():
                        )
 
     plt.tight_layout()
-    # plt.savefig('good_models/PPO-tennis-eval.png', bbox_inches='tight')
+    # plt.savefig('good_models/PPO-tennis-train.png', bbox_inches='tight')
     plt.show(bbox_inches='tight')
 
 
